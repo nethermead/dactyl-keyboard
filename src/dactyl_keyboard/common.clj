@@ -216,6 +216,117 @@
        (key-position c 1 row [(* mount-width -0.5) (* direction mount-height 0.5) 0])
        [left-wall-x-offset 0 left-wall-z-offset]))
 
+(def holder-x mount-width)
+(def holder-thickness    (/ (- holder-x keyswitch-width) 2))
+(def holder-y            (+ keyswitch-height (* holder-thickness 2)))
+(def swap-z              3)
+(def web-thickness (+ plate-thickness swap-z))
+(def LED-holder true)
+(def square-led-size     6)
+
+(def switch-teeth-cutout
+  (let [
+        ; cherry, gateron, kailh switches all have a pair of tiny "teeth" that stick out
+        ; on the top and bottom, this gives those teeth somewhere to press into
+        teeth-x        4.5
+        teeth-y        0.75
+        teeth-z        1.75
+        teeth-x-offset 0
+        teeth-y-offset (+ (/ keyswitch-height 2) (/ teeth-y 2.01))
+        teeth-z-offset (- plate-thickness 1.95)
+       ]
+      (->> (cube teeth-x teeth-y teeth-z)
+           (translate [teeth-x-offset teeth-y-offset teeth-z-offset])
+      )
+  )
+)
+
+(def hotswap-holder-dk
+  (let [
+        ; irregularly shaped hot swap holder
+        ; ___________
+        ;| |_______| |  hotswap offset from out edge of holder with room to solder
+        ;|_|_O__  \  |  hotswap pin
+        ;|      \O_|_|  hotswap pin
+        ;|  o  O  o  |  fully supported friction holes
+        ;| _________ |   
+        ;||_________||  space for LED under SMD or transparent switches
+        ;
+        ; can be be described as having two sizes in the y dimension depending on the x coordinate        
+        swap-x              holder-x
+        swap-y              (if (or (> 11.5 holder-y) LED-holder) holder-y 11.5) ; should be less than or equal to holder-y
+        
+        swap-offset-x       0
+        swap-offset-y       (/ (- holder-y swap-y) 2)
+        swap-offset-z       (* (/ swap-z 2) -1) ; the bottom of the hole. 
+        swap-holder         (->> (cube swap-x swap-y swap-z)
+                                 (translate [swap-offset-x 
+                                             swap-offset-y
+                                             swap-offset-z]))
+        hotswap-x           holder-x ;cutout full width of holder instead of only 14.5mm
+        hotswap-x2          (* (/ holder-x 3) 1.95)
+        hotswap-x3          (/ holder-x 4)
+        hotswap-y1          4.3 ;first y-size of kailh hotswap holder
+        hotswap-y2          6.2 ;second y-size of kailh hotswap holder
+        hotswap-z           (+ swap-z 0.5) ;thickness of kailn hotswap holder + some margin of printing error (0.5mm)
+        hotswap-cutout-1-x-offset 0.01
+        hotswap-cutout-2-x-offset (* (/ holder-x 4.5) -1)
+        hotswap-cutout-3-x-offset (- (/ holder-x 2) (/ hotswap-x3 2))
+        hotswap-cutout-4-x-offset (- (/ hotswap-x3 2) (/ holder-x 2))
+        hotswap-cutout-led-x-offset 0
+        hotswap-cutout-1-y-offset 4.95
+        hotswap-cutout-2-y-offset 4
+        hotswap-cutout-3-y-offset (/ holder-y 2)
+        hotswap-cutout-led-y-offset -6
+        hotswap-cutout-z-offset -2.6
+        hotswap-cutout-1    (->> (cube hotswap-x hotswap-y1 hotswap-z)
+                                 (translate [hotswap-cutout-1-x-offset 
+                                             hotswap-cutout-1-y-offset 
+                                             hotswap-cutout-z-offset]))
+        hotswap-cutout-2    (->> (cube hotswap-x2 hotswap-y2 hotswap-z)
+                                 (translate [hotswap-cutout-2-x-offset 
+                                             hotswap-cutout-2-y-offset 
+                                             hotswap-cutout-z-offset]))
+        hotswap-cutout-3    (->> (cube hotswap-x3 hotswap-y1 hotswap-z)
+                                 (translate [ hotswap-cutout-3-x-offset
+                                              hotswap-cutout-3-y-offset
+                                              hotswap-cutout-z-offset]))
+        hotswap-cutout-4    (->> (cube hotswap-x3 hotswap-y1 hotswap-z)
+                                 (translate [ hotswap-cutout-4-x-offset
+                                              hotswap-cutout-3-y-offset
+                                              hotswap-cutout-z-offset]))
+        hotswap-led-cutout  (->> (cube square-led-size square-led-size 10)
+                                 (translate [ hotswap-cutout-led-x-offset
+                                              hotswap-cutout-led-y-offset
+                                              hotswap-cutout-z-offset]))
+        ; for the main axis
+        main-axis-hole      (->> (cylinder (/ 4.1 2) 10)
+                                 (with-fn 12))
+        plus-hole           (->> (cylinder (/ 3.3 2) 10)
+                                 (with-fn 8)
+                                 (translate [-3.81 2.54 0]))
+        minus-hole          (->> (cylinder (/ 3.3 2) 10)
+                                 (with-fn 8)
+                                 (translate [2.54 5.08 0]))
+        friction-hole       (->> (cylinder (/ 1.95 2) 10)
+                                 (with-fn 8))
+        friction-hole-right (translate [5 0 0] friction-hole)
+        friction-hole-left  (translate [-5 0 0] friction-hole)
+       ]
+      (difference swap-holder
+                  main-axis-hole
+                  plus-hole
+                  minus-hole
+                  friction-hole-left
+                  friction-hole-right
+                  hotswap-cutout-1
+                  hotswap-cutout-2
+                  hotswap-cutout-3
+                  hotswap-cutout-4
+                  hotswap-led-cutout)
+  )
+)
+
 ;;;;;;;;;;;;;;;;;
 ;; Switch Hole ;;
 ;;;;;;;;;;;;;;;;;
@@ -224,7 +335,7 @@
    box or mx style based on the `configuration-create-side-nub?`. It also
    asks whether it creates hotswap housing or not based on `configuration-use-hotswap?`.
    and determines whether it should use alps cutout or not based on  `configuration-use-alps?`"
-  [c]
+  [c] 
   (let [switch-type         (get c :configuration-switch-type)
         create-side-nub?    (case switch-type
                               :mx true
@@ -232,108 +343,196 @@
         use-alps?           (case switch-type
                               :alps true
                               false) #_(get c :configuration-use-alps?)
-        use-choc?           (case switch-type
-                              :choc true
-                              false)
+       	north_facing?       (get c :configuration-north-facing? true)
         use-hotswap?        (get c :configuration-use-hotswap?)
-        is-right?        (get c :is-right?)
         plate-projection?   (get c :configuration-plate-projection? false)
-        fill-in             (translate [0 0 (/ plate-thickness 2)] (cube alps-width alps-height plate-thickness))
-        holder-thickness    1.65
-        top-wall            (case switch-type
-                              :alps (->> (cube (+ keyswitch-width 3) 2.7 plate-thickness)
-                                         (translate [0
-                                                     (+ (/ 2.7 2) (/ alps-height 2))
-                                                     (/ plate-thickness 2)]))
-                              :choc (->> (cube (+ keyswitch-width 3.3) holder-thickness (* plate-thickness 0.65))
-                                         (translate [0
-                                                     (+ (/ holder-thickness 2) (/ keyswitch-height 2))
-                                                     (* plate-thickness 0.7)]))
-                              (->> (cube (+ keyswitch-width 3.3) holder-thickness plate-thickness)
+
+        ;magic numbers
+        switch_z_offset     (/ plate-thickness 2)
+        half-holder-thickness       (/ holder-thickness 2)
+        keyswitch-middle-width      (/ keyswitch-width 2)
+        alps-fill-in        (translate [0 0 switch_z_offset] (cube alps-width alps-height plate-thickness))
+        mx-fill-in          (translate [0 0 switch_z_offset] (cube keyswitch-width keyswitch-height plate-thickness))
+        fill-in             (if use-alps? alps-fill-in mx-fill-in)
+        alps-holder-y        (+ keyswitch-height 3)
+
+        top-wall            (if use-alps?
+                              (->> (cube (+ keyswitch-width 3) 2.7 plate-thickness)
                                    (translate [0
-                                               (+ (/ holder-thickness 2) (/ keyswitch-height 2))
-                                               (/ plate-thickness 2)])))
-        left-wall           (case switch-type
-                              :alps (union (->> (cube 2 (+ keyswitch-height 3) plate-thickness)
-                                                (translate [(+ (/ 2 2) (/ 15.6 2))
-                                                            0
-                                                            (/ plate-thickness 2)]))
-                                           (->> (cube 1.5 (+ keyswitch-height 3) 1.0)
-                                                (translate [(+ (/ 1.5 2) (/ alps-notch-width 2))
-                                                            0
-                                                            (- plate-thickness
-                                                               (/ alps-notch-height 2))])))
-                              :choc (->> (cube holder-thickness (+ keyswitch-height 3.3) (* plate-thickness 0.65))
-                                         (translate [(+ (/ holder-thickness 2) (/ keyswitch-width 2))
-                                                     0
-                                                     (* plate-thickness 0.7)]))
-                              (->> (cube holder-thickness (+ keyswitch-height 3.3) plate-thickness)
-                                   (translate [(+ (/ holder-thickness 2) (/ keyswitch-width 2))
+                                               (+ (/ 2.7 2) (/ alps-height 2))
+                                               switch_z_offset]))
+                              (->> (cube holder-x holder-thickness plate-thickness)
+                                   (translate [0
+                                               (+ half-holder-thickness (/ keyswitch-height 2))
+                                               switch_z_offset])))
+        left-wall           (if use-alps?
+                              (union (->> (cube 2 alps-holder-y plate-thickness)
+                                          (translate [(+ (/ 2 2) (/ 15.6 2))
+                                                      0
+                                                      switch_z_offset]))
+                                     (->> (cube 1.5 alps-holder-y 1.0)
+                                          (translate [(+ (/ 1.5 2) (/ alps-notch-width 2))
+                                                      0
+                                                      (- plate-thickness (/ alps-notch-height 2))])))
+                              (->> (cube holder-thickness holder-y plate-thickness)
+                                   (translate [(+ keyswitch-middle-width half-holder-thickness)
                                                0
-                                               (/ plate-thickness 2)])))
+                                               switch_z_offset])))
         side-nub            (->> (binding [*fn* 30] (cylinder 1 2.75))
                                  (rotate (/ pi 2) [1 0 0])
-                                 (translate [(+ (/ keyswitch-width 2)) 0 1])
+                                 (translate [(+ keyswitch-middle-width) 0 1])
                                  (hull (->> (cube 1.5 2.75 plate-thickness)
-                                            (translate [(+ (/ 1.5 2) (/ keyswitch-width 2))
+                                            (translate [(+ (/ 1.5 2) keyswitch-middle-width)
                                                         0
-                                                        (/ plate-thickness 2)]))))
+                                                        switch_z_offset]))))
+
         ; the hole's wall.
-        kailh-cutout (->> (cube (/ keyswitch-width 3) 1.6 (+ plate-thickness 1.8))
-                          (translate [0
-                                      (+ (/ 1.5 2) (+ (/ keyswitch-height 2)))
-                                      (/ plate-thickness)]))
-        plate-half          (case switch-type
-                              :kailh (union (difference top-wall kailh-cutout) left-wall)
-                              (union top-wall
-                                     left-wall
-                                     (if create-side-nub? (with-fn 100 side-nub))))
-        ; the bottom of the hole.
-        swap-holder-z-offset (if use-choc? 1.5 -1.5)
-        swap-holder         (->> (cube (+ keyswitch-width 3) (/ (+ keyswitch-height 3) 2) 3)
-                                 (translate [0 (/ (+ keyswitch-height 3) 4) swap-holder-z-offset]))
-        ; for the main axis
-        main-axis-hole      (->> (cylinder (/ 4.0 2) 10)
-                                 (with-fn 12))
-        plus-hole           (->> (cylinder (/ 3.3 2) 10)
-                                 (with-fn 8)
-                                 (translate (if use-choc? [-5 4 0] [-3.81 2.54 0])))
-        minus-hole          (->> (cylinder (/ 3.3 2) 10)
-                                 (with-fn 8)
-                                 (translate (if use-choc? [0 6 0] [2.54 5.08 0])))
-        plus-hole-mirrored  (->> (cylinder (/ 3.3 2) 10)
-                                 (with-fn 8)
-                                 (translate (if use-choc? [5 4 0] [3.81 2.54 0])))
-        minus-hole-mirrored (->> (cylinder (/ 3.3 2) 10)
-                                 (with-fn 8)
-                                 (translate (if use-choc? [0 6 0] [-2.54 5.08 0])))
-        friction-hole       (->> (cylinder (if use-choc? 1 (/ 1.7 2)) 10)
-                                 (with-fn 8))
-        friction-hole-right (translate [(if use-choc? 5.5 5) 0 0] friction-hole)
-        friction-hole-left  (translate [(if use-choc? -5.5 -5) 0 0] friction-hole)
-        hotswap-base-z-offset (if use-choc? 0.2 -2.6)
-        hotswap-base-shape  (->> (cube 19 (if use-choc? 11.5 8.2) 3.5)
-                                 (translate [0 3 hotswap-base-z-offset]))
-        hotswap-holder      (difference swap-holder
-                                        main-axis-hole
-                                        (if is-right?
-                                          plus-hole
-                                          plus-hole-mirrored)
-                                        (if is-right?
-                                          minus-hole
-                                          minus-hole-mirrored)
-                                        friction-hole-left
-                                        friction-hole-right
-                                        hotswap-base-shape)]
-    (difference (union plate-half
-                       (->> plate-half
-                            (mirror [1 0 0])
-                            (mirror [0 1 0]))
-                       (if plate-projection? fill-in ())
-                       (if (and use-hotswap?
-                                (not use-alps?))
-                         hotswap-holder
-                         ())))))
+        plate-half (difference (union top-wall
+                                      left-wall
+                                      (if create-side-nub? (with-fn 100 side-nub) ())
+                               )
+                               switch-teeth-cutout
+                   )
+        plate (difference (union plate-half
+                                 (->> plate-half
+                                      (mirror [1 0 0])
+                                      (mirror [0 1 0]))
+                                 (if plate-projection? fill-in ())
+                                 (if (and use-hotswap? (not use-alps?))
+                                       (if north_facing?
+                                           (->> hotswap-holder-dk
+                                                (mirror [1 0 0])
+                                                (mirror [0 1 0])
+                                           )
+                                           hotswap-holder-dk
+                                       )
+                                     ()
+                                  )))
+       ]
+       (->> (if false
+                (->> plate (mirror [1 0 0]))
+                plate
+            )
+       )
+      ;; (plate)
+  )
+)
+
+;; (defn single-plate
+;;   "Defines the form of switch hole. It determines the whether it uses
+;;    box or mx style based on the `configuration-create-side-nub?`. It also
+;;    asks whether it creates hotswap housing or not based on `configuration-use-hotswap?`.
+;;    and determines whether it should use alps cutout or not based on  `configuration-use-alps?`"
+;;   [c]
+;;   (let [switch-type         (get c :configuration-switch-type)
+;;         create-side-nub?    (case switch-type
+;;                               :mx true
+;;                               false) #_(get c :configuration-create-side-nub?)
+;;         use-alps?           (case switch-type
+;;                               :alps true
+;;                               false) #_(get c :configuration-use-alps?)
+;;         use-choc?           (case switch-type
+;;                               :choc true
+;;                               false)
+;;         use-hotswap?        (get c :configuration-use-hotswap?)
+;;         is-right?        (get c :is-right?)
+;;         plate-projection?   (get c :configuration-plate-projection? false)
+;;         fill-in             (translate [0 0 (/ plate-thickness 2)] (cube alps-width alps-height plate-thickness))
+;;         holder-thickness    1.65
+;;         top-wall            (case switch-type
+;;                               :alps (->> (cube (+ keyswitch-width 3) 2.7 plate-thickness)
+;;                                          (translate [0
+;;                                                      (+ (/ 2.7 2) (/ alps-height 2))
+;;                                                      (/ plate-thickness 2)]))
+;;                               :choc (->> (cube (+ keyswitch-width 3.3) holder-thickness (* plate-thickness 0.65))
+;;                                          (translate [0
+;;                                                      (+ (/ holder-thickness 2) (/ keyswitch-height 2))
+;;                                                      (* plate-thickness 0.7)]))
+;;                               (->> (cube (+ keyswitch-width 3.3) holder-thickness plate-thickness)
+;;                                    (translate [0
+;;                                                (+ (/ holder-thickness 2) (/ keyswitch-height 2))
+;;                                                (/ plate-thickness 2)])))
+;;         left-wall           (case switch-type
+;;                               :alps (union (->> (cube 2 (+ keyswitch-height 3) plate-thickness)
+;;                                                 (translate [(+ (/ 2 2) (/ 15.6 2))
+;;                                                             0
+;;                                                             (/ plate-thickness 2)]))
+;;                                            (->> (cube 1.5 (+ keyswitch-height 3) 1.0)
+;;                                                 (translate [(+ (/ 1.5 2) (/ alps-notch-width 2))
+;;                                                             0
+;;                                                             (- plate-thickness
+;;                                                                (/ alps-notch-height 2))])))
+;;                               :choc (->> (cube holder-thickness (+ keyswitch-height 3.3) (* plate-thickness 0.65))
+;;                                          (translate [(+ (/ holder-thickness 2) (/ keyswitch-width 2))
+;;                                                      0
+;;                                                      (* plate-thickness 0.7)]))
+;;                               (->> (cube holder-thickness (+ keyswitch-height 3.3) plate-thickness)
+;;                                    (translate [(+ (/ holder-thickness 2) (/ keyswitch-width 2))
+;;                                                0
+;;                                                (/ plate-thickness 2)])))
+;;         side-nub            (->> (binding [*fn* 30] (cylinder 1 2.75))
+;;                                  (rotate (/ pi 2) [1 0 0])
+;;                                  (translate [(+ (/ keyswitch-width 2)) 0 1])
+;;                                  (hull (->> (cube 1.5 2.75 plate-thickness)
+;;                                             (translate [(+ (/ 1.5 2) (/ keyswitch-width 2))
+;;                                                         0
+;;                                                         (/ plate-thickness 2)]))))
+;;         ; the hole's wall.
+;;         kailh-cutout (->> (cube (/ keyswitch-width 3) 1.6 (+ plate-thickness 1.8))
+;;                           (translate [0
+;;                                       (+ (/ 1.5 2) (+ (/ keyswitch-height 2)))
+;;                                       (/ plate-thickness)]))
+;;         plate-half          (case switch-type
+;;                               :kailh (union (difference top-wall kailh-cutout) left-wall)
+;;                               (union top-wall
+;;                                      left-wall
+;;                                      (if create-side-nub? (with-fn 100 side-nub))))
+;;         ; the bottom of the hole.
+;;         swap-holder-z-offset (if use-choc? 1.5 -1.5)
+;;         swap-holder         (->> (cube (+ keyswitch-width 3) (/ (+ keyswitch-height 3) 2) 3)
+;;                                  (translate [0 (/ (+ keyswitch-height 3) 4) swap-holder-z-offset]))
+;;         ; for the main axis
+;;         main-axis-hole      (->> (cylinder (/ 4.0 2) 10)
+;;                                  (with-fn 12))
+;;         plus-hole           (->> (cylinder (/ 3.3 2) 10)
+;;                                  (with-fn 8)
+;;                                  (translate (if use-choc? [-5 4 0] [-3.81 2.54 0])))
+;;         minus-hole          (->> (cylinder (/ 3.3 2) 10)
+;;                                  (with-fn 8)
+;;                                  (translate (if use-choc? [0 6 0] [2.54 5.08 0])))
+;;         plus-hole-mirrored  (->> (cylinder (/ 3.3 2) 10)
+;;                                  (with-fn 8)
+;;                                  (translate (if use-choc? [5 4 0] [3.81 2.54 0])))
+;;         minus-hole-mirrored (->> (cylinder (/ 3.3 2) 10)
+;;                                  (with-fn 8)
+;;                                  (translate (if use-choc? [0 6 0] [-2.54 5.08 0])))
+;;         friction-hole       (->> (cylinder (if use-choc? 1 (/ 1.7 2)) 10)
+;;                                  (with-fn 8))
+;;         friction-hole-right (translate [(if use-choc? 5.5 5) 0 0] friction-hole)
+;;         friction-hole-left  (translate [(if use-choc? -5.5 -5) 0 0] friction-hole)
+;;         hotswap-base-z-offset (if use-choc? 0.2 -2.6)
+;;         hotswap-base-shape  (->> (cube 19 (if use-choc? 11.5 8.2) 3.5)
+;;                                  (translate [0 3 hotswap-base-z-offset]))
+;;         hotswap-holder      (difference swap-holder
+;;                                         main-axis-hole
+;;                                         (if is-right?
+;;                                           plus-hole
+;;                                           plus-hole-mirrored)
+;;                                         (if is-right?
+;;                                           minus-hole
+;;                                           minus-hole-mirrored)
+;;                                         friction-hole-left
+;;                                         friction-hole-right
+;;                                         hotswap-base-shape)]
+;;     (difference (union plate-half
+;;                        (->> plate-half
+;;                             (mirror [1 0 0])
+;;                             (mirror [0 1 0]))
+;;                        (if plate-projection? fill-in ())
+;;                        (if (and use-hotswap?
+;;                                 (not use-alps?))
+;;                          hotswap-holder
+;;                          ())))))
 ;;;;;;;;;;;;;;;;
 ;; SA Keycaps ;;
 ;;;;;;;;;;;;;;;;
