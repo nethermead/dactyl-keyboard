@@ -1202,7 +1202,7 @@
     (key-position c 1 0 (map - (wall-locate2  0 y-addition) [0 (/ mount-height 2) 0]))))
 
 (defn trrs-usb-holder-position [c]
-  (map + [17 19.3 0] [(first (trrs-usb-holder-ref c)) (second (trrs-usb-holder-ref c)) 2]))
+  (map + [12 19.3 0] [(first (trrs-usb-holder-ref c)) (second (trrs-usb-holder-ref c)) 2]))
 (def trrs-usb-holder-cube
   (cube 15 12 2))
 (defn trrs-usb-holder-space [c]
@@ -1450,7 +1450,7 @@
         :configuration-hide-last-pinky?       false
 
         :configuration-alpha                  (/ pi 10)
-        :configuration-pinky-alpha            (/ pi 10)
+        :configuration-pinky-alpha            (/ pi 1)
         :configuration-beta                   (/ pi 36)
         :configuration-centercol              4
         :configuration-tenting-angle          (/ pi 12)
