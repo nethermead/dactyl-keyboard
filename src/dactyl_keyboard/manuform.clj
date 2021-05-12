@@ -78,7 +78,8 @@
                       column row shape))
 (defn key-holes
   "determines which keys should be generated based on the configuration."
-  [c]
+  ([c] key-holes c true)
+  ([c right]
   (let [inner               (get c :configuration-inner-column)
         ncols               (get c :configuration-ncols)
         nrows               (get c :configuration-nrows)
@@ -107,9 +108,9 @@
                           :outie (not (and (= column -1)
                                            (<= cornerrow row)))
                           true)]
-             (->> (single-plate c)
+             (->> (single-plate c right)
                   (color [1 1 0])
-                  (key-place c column row))))))
+                  (key-place c column row)))))))
 
 (defn key-inner-place
   "it generates the placement of the inner column.
@@ -1375,13 +1376,16 @@
       (key-place c column row (translate [0 0 0]  (wire-post c -1 6)))
       (key-place c column row (translate [5 0 0]  (wire-post c  1 0)))))))
 
-(defn model-right [c]
+(defn model-right 
+([c] (model-right c true))
+([c right] 
   (let [show-caps?                 (get c :configuration-show-caps?)
         use-external-holder?       (get c :configuration-use-external-holder?)
         use-promicro-usb-hole?     (get c :configuration-use-promicro-usb-hole?)
         use-screw-inserts?         (get c :configuration-use-screw-inserts?)
         use-trrs?                  (get c :configuration-use-trrs?)
         use-wire-post?             (get c :configuration-use-wire-post?)]
+    (println "model-right")
     (difference
      (union
       (if show-caps? (caps c) ())
@@ -1391,7 +1395,7 @@
          (if use-wire-post? (wire-posts c) ())
          (if-not use-trrs? (rj9-holder frj9-start c) ()))
         ())
-      (key-holes c)
+      (key-holes c right)
       (thumb c)
       (connectors c)
       (thumb-connectors c)
@@ -1416,10 +1420,10 @@
                    (trrs-usb-jack c))
             (usb-holder-hole fusb-holder-position c)))
          (external-holder-space c))))
-     (translate [0 0 -60] (cube 350 350 120)))))
+     (translate [0 0 -60] (cube 350 350 120))))))
 
 (defn model-left [c]
-  (mirror [-1 0 0] (model-right c)))
+  (mirror [-1 0 0] (model-right c false)))
 
 (defn plate-right [c]
   (let [use-screw-inserts? (get c :configuration-use-screw-inserts?)

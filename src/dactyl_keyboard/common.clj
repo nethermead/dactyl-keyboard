@@ -423,7 +423,8 @@
    box or mx style based on the `configuration-create-side-nub?`. It also
    asks whether it creates hotswap housing or not based on `configuration-use-hotswap?`.
    and determines whether it should use alps cutout or not based on  `configuration-use-alps?`"
-  [c]
+  ([c] (single-plate c true))
+  ([c right] 
   (let [switch-type         (get c :configuration-switch-type)
         create-side-nub?    (case switch-type
                               :mx true
@@ -522,8 +523,9 @@
                        (if plate-projection? fill-in ())
                        (if (and use-hotswap?
                                 (not use-alps?))
-                         hotswap-holder
-                         ())))))
+                         (if right hotswap-holder 
+                            (mirror [1,0,0] hotswap-holder))
+                         ()))))))
 ;;;;;;;;;;;;;;;;
 ;; SA Keycaps ;;
 ;;;;;;;;;;;;;;;;
