@@ -11,7 +11,7 @@
 ;(def keyboard-z-offset 4)
 
 
-;; settings for column-style == :fixed 
+;; settings for column-style == :fixed
 ;; the defaults roughly match maltron settings
 ;;   http://patentimages.storage.googleapis.com/ep0219944a2/imgf0002.png
 ;; fixed-z overrides the z portion of the column ofsets above.
@@ -445,11 +445,13 @@
    (thumb-1x-layout c (sa-cap 1))
    (thumb-15x-layout c (rotate (/ pi 2) [0 0 1] (sa-cap 1.5)))))
 
-(defn thumb [c]
+(defn thumb
+  ([c] (thumb c true))  
+  ([c right]
   (union
-   (thumb-1x-layout c (single-plate c))
-   (thumb-15x-layout c (single-plate c))
-   (thumb-15x-layout c larger-plate)))
+   (thumb-1x-layout c (single-plate c right))
+   (thumb-15x-layout c (single-plate c right))
+   (thumb-15x-layout c larger-plate))))
 
 (def thumb-post-tr
   (translate [(- (/ mount-width 2) post-adj)
@@ -1376,9 +1378,9 @@
       (key-place c column row (translate [0 0 0]  (wire-post c -1 6)))
       (key-place c column row (translate [5 0 0]  (wire-post c  1 0)))))))
 
-(defn model-right 
+(defn model-right
 ([c] (model-right c true))
-([c right] 
+([c right]
   (let [show-caps?                 (get c :configuration-show-caps?)
         use-external-holder?       (get c :configuration-use-external-holder?)
         use-promicro-usb-hole?     (get c :configuration-use-promicro-usb-hole?)
@@ -1396,7 +1398,7 @@
          (if-not use-trrs? (rj9-holder frj9-start c) ()))
         ())
       (key-holes c right)
-      (thumb c)
+      (thumb c right)
       (connectors c)
       (thumb-connectors c)
       (difference

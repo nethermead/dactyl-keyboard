@@ -15,6 +15,7 @@ pom.xml.asc
 .nrepl-history
 .cpcache/
 .clj-kondo/.cache/
+.idea/*
 
 ### VS Code ###
 .vscode/*
