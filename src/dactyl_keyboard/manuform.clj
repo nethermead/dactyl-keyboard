@@ -316,7 +316,7 @@
   (let [custom-offset? (get c :configuration-custom-thumb-offsets?)]
     (if custom-offset? [get c :configuration-custom-] default)))
 
-(defn thumb-tl-place [c shape]
+(defn thumb-tl-place [c shape]                              ; outside top 1.5u thumb
   (let [thumb-count     (get c :configuration-thumb-count)
         x-rotation      (thumb-tenting c 10 :configuration-custom-thumb-tenting-x)
         y-rotation      (thumb-tenting c -23 :configuration-custom-thumb-tenting-y)
@@ -329,7 +329,7 @@
       (translate (thumborigin c))
       (translate movement))))
 
-(defn thumb-tr-place [c shape]
+(defn thumb-tr-place [c shape]                              ; inside top 1.5u thumb
   (let [thumb-count (get c :configuration-thumb-count)
         x-rotation (thumb-tenting c (if (= thumb-count :five) 14 10) :configuration-custom-thumb-tenting-x)
         y-rotation (thumb-tenting c (if (= thumb-count :five) -15 -23) :configuration-custom-thumb-tenting-y)
@@ -446,11 +446,11 @@
    (thumb-15x-layout c (rotate (/ pi 2) [0 0 1] (sa-cap 1.5)))))
 
 (defn thumb
-  ([c] (thumb c true))  
+  ([c] (thumb c true))
   ([c right]
   (union
-   (thumb-1x-layout c (single-plate c right))
-   (thumb-15x-layout c (single-plate c right))
+   (thumb-1x-layout c (single-plate c right true))
+   (thumb-15x-layout c (single-plate c right true))
    (thumb-15x-layout c larger-plate))))
 
 (def thumb-post-tr
@@ -1387,7 +1387,6 @@
         use-screw-inserts?         (get c :configuration-use-screw-inserts?)
         use-trrs?                  (get c :configuration-use-trrs?)
         use-wire-post?             (get c :configuration-use-wire-post?)]
-    (println "model-right")
     (difference
      (union
       (if show-caps? (caps c) ())

@@ -241,7 +241,9 @@
   )
 )
 
-(def hotswap-holder-dk
+(defn hotswap-holder-dk
+  ([] (hotswap-holder-dk false))
+  ([thumb]
   (let [
         ; irregularly shaped hot swap holder
         ; ___________
@@ -249,18 +251,18 @@
         ;|_|_O__  \  |  hotswap pin
         ;|      \O_|_|  hotswap pin
         ;|  o  O  o  |  fully supported friction holes
-        ;| _________ |   
+        ;| _________ |
         ;||_________||  space for LED under SMD or transparent switches
         ;
-        ; can be be described as having two sizes in the y dimension depending on the x coordinate        
+        ; can be be described as having two sizes in the y dimension depending on the x coordinate
         swap-x              holder-x
         swap-y              (if (or (> 11.5 holder-y) LED-holder) holder-y 11.5) ; should be less than or equal to holder-y
-        
+
         swap-offset-x       0
         swap-offset-y       (/ (- holder-y swap-y) 2)
-        swap-offset-z       (* (/ swap-z 2) -1) ; the bottom of the hole. 
+        swap-offset-z       (* (/ swap-z 2) -1) ; the bottom of the hole.
         swap-holder         (->> (cube swap-x swap-y swap-z)
-                                 (translate [swap-offset-x 
+                                 (translate [swap-offset-x
                                              swap-offset-y
                                              swap-offset-z]))
         hotswap-x           holder-x ;cutout full width of holder instead of only 14.5mm
@@ -280,12 +282,12 @@
         hotswap-cutout-led-y-offset -6
         hotswap-cutout-z-offset -2.6
         hotswap-cutout-1    (->> (cube hotswap-x hotswap-y1 hotswap-z)
-                                 (translate [hotswap-cutout-1-x-offset 
-                                             hotswap-cutout-1-y-offset 
+                                 (translate [hotswap-cutout-1-x-offset
+                                             hotswap-cutout-1-y-offset
                                              hotswap-cutout-z-offset]))
         hotswap-cutout-2    (->> (cube hotswap-x2 hotswap-y2 hotswap-z)
-                                 (translate [hotswap-cutout-2-x-offset 
-                                             hotswap-cutout-2-y-offset 
+                                 (translate [hotswap-cutout-2-x-offset
+                                             hotswap-cutout-2-y-offset
                                              hotswap-cutout-z-offset]))
         hotswap-cutout-3    (->> (cube hotswap-x3 hotswap-y1 hotswap-z)
                                  (translate [ hotswap-cutout-3-x-offset
@@ -312,20 +314,20 @@
                                  (with-fn 8))
         friction-hole-right (translate [5 0 0] friction-hole)
         friction-hole-left  (translate [-5 0 0] friction-hole)
+        holder              (difference swap-holder
+                                        main-axis-hole
+                                        plus-hole
+                                        minus-hole
+                                        friction-hole-left
+                                        friction-hole-right
+                                        hotswap-cutout-1
+                                        hotswap-cutout-2
+                                        hotswap-cutout-3
+                                        hotswap-cutout-4
+                                        hotswap-led-cutout)
        ]
-      (difference swap-holder
-                  main-axis-hole
-                  plus-hole
-                  minus-hole
-                  friction-hole-left
-                  friction-hole-right
-                  hotswap-cutout-1
-                  hotswap-cutout-2
-                  hotswap-cutout-3
-                  hotswap-cutout-4
-                  hotswap-led-cutout)
-  )
-)
+    (if thumb (rotate (/ pi 2) [0 0 -1] holder) holder))))
+
 
 ;;;;;;;;;;;;;;;;;
 ;; Switch Hole ;;
@@ -335,7 +337,7 @@
 ;;    box or mx style based on the `configuration-create-side-nub?`. It also
 ;;    asks whether it creates hotswap housing or not based on `configuration-use-hotswap?`.
 ;;    and determines whether it should use alps cutout or not based on  `configuration-use-alps?`"
-;;   [c] 
+;;   [c]
 ;;   (let [switch-type         (get c :configuration-switch-type)
 ;;         create-side-nub?    (case switch-type
 ;;                               :mx true
@@ -423,8 +425,9 @@
    box or mx style based on the `configuration-create-side-nub?`. It also
    asks whether it creates hotswap housing or not based on `configuration-use-hotswap?`.
    and determines whether it should use alps cutout or not based on  `configuration-use-alps?`"
-  ([c] (single-plate c true))
-  ([c right] 
+  ([c] (single-plate c true false))
+  ([c right] (single-plate c right false))
+  ([c right thumb]
   (let [switch-type         (get c :configuration-switch-type)
         create-side-nub?    (case switch-type
                               :mx true
@@ -514,8 +517,8 @@
         hotswap-base-z-offset (if use-choc? 0.2 -2.6)
         hotswap-base-shape  (->> (cube 19 (if use-choc? 11.5 8.2) 3.5)
                                  (translate [0 3 hotswap-base-z-offset]))
-        hotswap-holder      (->> hotswap-holder-dk )
-                                        ]
+        hotswap-holder      (->> (hotswap-holder-dk thumb) )
+        ]
     (difference (union plate-half
                        (->> plate-half
                             (mirror [1 0 0])
@@ -523,7 +526,7 @@
                        (if plate-projection? fill-in ())
                        (if (and use-hotswap?
                                 (not use-alps?))
-                         (if right hotswap-holder 
+                         (if right hotswap-holder
                             (mirror [1,0,0] hotswap-holder))
                          ()))))))
 ;;;;;;;;;;;;;;;;
