@@ -242,8 +242,7 @@
 )
 
 (defn hotswap-holder-dk
-  ([] (hotswap-holder-dk false))
-  ([thumb]
+  ([right thumb]
   (let [
         ; irregularly shaped hot swap holder
         ; ___________
@@ -325,8 +324,9 @@
                                         hotswap-cutout-3
                                         hotswap-cutout-4
                                         hotswap-led-cutout)
+        orient              (if right 1 -1)
        ]
-    (if thumb (rotate (/ pi 2) [0 0 -1] holder) holder))))
+    (if thumb (rotate (/ pi 2) [0 0 orient] holder) holder))))
 
 
 ;;;;;;;;;;;;;;;;;
@@ -517,7 +517,7 @@
         hotswap-base-z-offset (if use-choc? 0.2 -2.6)
         hotswap-base-shape  (->> (cube 19 (if use-choc? 11.5 8.2) 3.5)
                                  (translate [0 3 hotswap-base-z-offset]))
-        hotswap-holder      (->> (hotswap-holder-dk thumb) )
+        hotswap-holder      (->> (hotswap-holder-dk right thumb) )
         ]
     (difference (union plate-half
                        (->> plate-half

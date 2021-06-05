@@ -449,7 +449,7 @@
   ([c] (thumb c true))
   ([c right]
   (union
-   (thumb-1x-layout c (single-plate c right true))
+   (thumb-1x-layout c (single-plate c right false))
    (thumb-15x-layout c (single-plate c right true))
    (thumb-15x-layout c larger-plate))))
 
