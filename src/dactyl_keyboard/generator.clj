@@ -3,7 +3,8 @@
   (:require [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
             [dactyl-keyboard.manuform :as dm]
-            [dactyl-keyboard.lightcycle :as dl]))
+            [dactyl-keyboard.lightcycle :as dl]
+            [dactyl-keyboard.common :as common]))
 
 (defn generate-case-dl [confs is-right?]
   (write-scad (if is-right?
@@ -100,3 +101,6 @@
   (write-scad (if is-right?
                 (dm/plate-right confs)
                 (dm/plate-left confs))))
+
+(defn generate-hotswap [confs is-right?]
+  (write-scad (common/hotswap-holder-dk true false)))

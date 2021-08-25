@@ -123,7 +123,9 @@
 
         param-generate-plate        (get p "generate-plate")
         param-generate-json         (get p "generate-json")
+        param-generate-hotswap      (get p "generate-hotswap")
 
+        generate-hotswap?           (some? param-generate-hotswap)
         generate-plate?             (some? param-generate-plate)
         generate-json?              (some? param-generate-json)
 
@@ -178,6 +180,8 @@
                                       generate-json? {:file      (g/generate-json-dm c is-right?)
                                                       :part      "any"
                                                       :extension "json"}
+                                      generate-hotswap? {:file    (g/generate-hotswap c is-right?)
+                                                         :extension "scad"}
                                       :else {:file      (g/generate-case-dm c is-right?)
                                              :part      (str "case-" (if is-right? "right" "left"))
                                              :extension "scad"})
@@ -232,7 +236,9 @@
 
         param-generate-plate      (get p "generate-plate")
         param-generate-json       (get p "generate-json")
+        param-generate-hotswap    (get p "generate-hotswap")
 
+        generate-hotswap?         (some? param-generate-hotswap)
         generate-plate?           (some? param-generate-plate)
         generate-json?            (some? param-generate-json)
 
@@ -271,6 +277,8 @@
                                                      :extension "scad"}
                                     generate-json? {:file      (g/generate-json-dl c is-right?)
                                                     :extension "json"}
+                                    generate-hotswap? {:file    (g/generate-hotswap c is-right?)
+                                                       :extension "scad"}
                                     :else {:file      (g/generate-case-dl c is-right?)
                                            :extension "scad"})
         scad-file                 (get generated-file :file)
